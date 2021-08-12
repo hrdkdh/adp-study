@@ -1,0 +1,382 @@
+# ADP실기 모의고사 2회 R코드
+
+
+###################################################################################
+#                      1. 통계분석 (사용 데이터 : Admission)                  
+###################################################################################
+
+
+#---------------------------------------------------------------------------------
+# Q1) 종속변수인 chance_of_admit(입학 허가 확률)와 독립변수(GRE, TOEFL, 
+#     Univ_Rating, SOP, LOR, CGPA)에 대해 피어슨 상관계수를 이용한 상관관계 분석을 
+#     수행하고 그래프를 이용하여 분석결과를 설명하시오.
+#---------------------------------------------------------------------------------
+
+
+## < Solution >
+
+#작업 디렉토리 설정
+setwd("C:/ADP/data")
+
+#데이터 불러오기
+adms<-read.csv("Admission.csv")
+
+str(adms)    
+head(adms)
+tail(adms)
+
+sum(is.na(adms))
+attach(adms)
+
+#1. GRE 와 Chance_of_Admit 간의 상관분석
+
+cor(GRE, Chance_of_Admit)         #피어슨 상관계수 산출
+cor.test(GRE, Chance_of_Admit)    #피어슨 상관계수 검정
+
+
+#2. TOEFL 와 Chance_of_Admit 간의 상관분석
+
+cor(TOEFL, Chance_of_Admit)         #피어슨 상관계수 산출
+cor.test(TOEFL, Chance_of_Admit)    #피어슨 상관계수 검정
+
+
+#3. Univ_Rating 와 Chance_of_Admit 간의 상관분석
+
+cor(Univ_Rating, Chance_of_Admit)         #피어슨 상관계수 산출
+cor.test(Univ_Rating, Chance_of_Admit)    #피어슨 상관계수 검정
+
+
+#4. SOP 와 Chance_of_Admit 간의 상관분석
+
+cor(SOP, Chance_of_Admit)         #피어슨 상관계수 산출
+cor.test(SOP, Chance_of_Admit)    #피어슨 상관계수 검정
+
+
+#5. LOR 와 Chance_of_Admit 간의 상관분석
+
+cor(LOR, Chance_of_Admit)         #피어슨 상관계수 산출
+cor.test(LOR, Chance_of_Admit)    #피어슨 상관계수 검정
+
+
+#6. CGPA 와 Chance_of_Admit 간의 상관분석
+
+cor(CGPA, Chance_of_Admit)         #피어슨 상관계수 산출
+cor.test(CGPA, Chance_of_Admit)    #피어슨 상관계수 검정
+
+
+#7. 상관계수 행렬 생성 및 시각화
+cor(adms[,-7])
+plot(adms[,-7])
+
+
+#상관계수를 시각화하기 위한 패키지 설치
+install.packages("corrgram") #상관계수를 시각화하기 위한 패키지 설치
+library(corrgram)
+
+
+#상관계수를 대각선의 형태로 시각화
+#upper.panel=panel.conf : 우측상단에 상관계수와 신뢰구간을 나타내는 것을 의미함
+corrgram(adms[,-7], upper.panel=panel.conf) 
+
+
+
+#---------------------------------------------------------------------------------
+# Q2) GRE, TOEFL, Univ_Rating, SOP, LOR, CGPA, Research가 Chance_of_Admit에 
+#     영향을 미치는지 알아보는 회귀분석을 단계적 선택법을 사용하여 수행하고 결과를 해석하시오.
+#---------------------------------------------------------------------------------
+
+## < Solution >
+#회귀모형 생성
+str(adms)
+adms.lm <- lm(Chance_of_Admit ~., data=adms)
+
+
+
+#회귀모형에 대한 정보 확인
+summary(adms.lm)
+
+
+#단계선택법을 통한 변수선택 수행
+step(adms.lm, direction="both")
+
+
+#변수선택을 통해 도출된 회귀모형
+adms.lm2 <- lm(Chance_of_Admit ~ GRE + TOEFL + LOR + CGPA + Research, data=adms)
+summary(adms.lm2)
+
+
+
+#---------------------------------------------------------------------------
+# Q3) 단계 선택법을 사용해 변수를 선택한 후 새롭게 생성한 회귀모형에 대한 
+#     잔차분석을 수행하고 결과를 해석하시오. 
+#---------------------------------------------------------------------------
+
+
+#독립성 가정을 만족하는지 확인 (더빈왓슨 검정)
+install.packages("lmtest")  #더빈왓슨 검정을 위해 필요한 패키지 설치
+library(lmtest)
+
+dwtest(adms.lm2)
+
+
+#정규성 가정을 만족하는지 확인
+shapiro.test(resid(adms.lm2))
+
+
+#등분산성, 정규성 가정을 만족하는지 확인
+par(mfrow=c(2,2))
+plot(adms.lm2)  
+
+
+
+###################################################################################
+#                      2. 정형 데이터마이닝 (사용 데이터 : Titanic)                  
+###################################################################################
+
+
+#---------------------------------------------------------------------------------------
+# Q1) cabib, embarked변수의 값 중 ""로 처리된 값을 NA로 바꾸고 아래의 데이터 테이블을 보고 
+#     문자형, 범주형 변수들을 각각 character, factor형으로 변환하시오.
+#     또, 수치형 변수가 NA인 값을 중앙값으로 대체하고, 범주형 변수가 NA인 값을 최빈값으로 대체하고
+#     age변수를 아래의 표와 같이 구간화하여 age_1이라는 변수를 생성하고 추가하시오. 
+#---------------------------------------------------------------------------------------
+
+
+## < Solution >
+##데이터 불러오기
+titanic<-read.csv("titanic.csv")
+summary(titanic)
+
+#cabin, embarked의 "" -> NA 바꾸기
+levels(titanic$embarked)
+
+levels(titanic$embarked)[1]<-NA
+table(titanic$embarked,useNA="always") #useNA="always"는 NA 개수도 출력
+
+titanic$cabin<-ifelse(titanic$cabin=="",NA,titanic$cabin)
+summary(titanic)
+
+#데이터 형태 변환
+str(titanic)
+
+titanic$pclass<-as.factor(titanic$pclass)
+titanic$name<-as.character(titanic$name)
+titanic$ticket<-as.character(titanic$ticket)
+titanic$cabin<-as.character(titanic$cabin)
+titanic$survived<-factor(titanic$survived,levels=c(0,1),labels=c("dead","survived"))
+
+#결측치 대치
+install.packages("DMwR")
+library(DMwR)
+
+sum(complete.cases(titanic))
+summary(titanic)
+titanic2<-centralImputation(titanic)
+summary(titanic2)
+sum(is.na(titanic2))
+
+#age_1생성 및 데이터 추가
+titanic2<-within(titanic2,
+                 {
+                   age_1=integer(0)
+                   age_1[age>=0 & age<10]=0
+                   age_1[age>=10 & age<20]=1
+                   age_1[age>=20 & age<30]=2
+                   age_1[age>=30 & age<40]=3
+                   age_1[age>=40 & age<50]=4
+                   age_1[age>=50 & age<60]=5
+                   age_1[age>=60 & age<70]=6
+                   age_1[age>=70 & age<80]=7
+                   age_1[age>=80 & age<90]=8
+                 })
+
+titanic2$age_1<-factor(titanic2$age_1,levels=c(0,1,2,3,4,5,6,7,8),
+                       labels=c("10세 미만","10대","20대","30대","40대","50대","60대","70대","80대"))
+
+str(titanic2)
+
+
+
+#---------------------------------------------------------------------------------------
+# Q2) 전처리가 완료된 titanic 데이터를 train(70%), test(30%) 데이터로 분할하시오.
+#    (set.seed(12345)를 실행한 후 데이터를 분할하시오.) 
+#    또, train 데이터로 종속변수인 survived(생존 여부)를 독립변수 pclass, sex, sibsp, parch, 
+#    fare, embarked로 지정하여 예측하는 분류모델을 3개 이상 생성하고 test 데이터에 대한 
+#    예측값을 csv파일로 각각 제출하시오.
+#---------------------------------------------------------------------------------------
+
+
+## < Solution >
+
+#데이터 분할
+set.seed(12345)
+idx<-sample(1:nrow(titanic2),size=nrow(titanic2)*0.7,replace=FALSE)
+train<-titanic2[idx,]
+test<-titanic2[-idx,]
+nrow(train)
+nrow(test)
+
+str(train)
+
+#모델링 하기 전 분석에 사용할 변수만 추출
+train_1<-train[,c("pclass","survived", "sex", "sibsp", "parch", "fare", "embarked")]
+test_1<-test[,c("pclass","survived", "sex", "sibsp", "parch", "fare", "embarked")]
+
+str(train_1)
+
+
+#모델링 (1) 의사결정나무(깊이를 최대 5개까지, 최소 관측치는 15개 이상)
+install.packages(c("rpart","rpart.plot"))
+library(rpart)
+library(rpart.plot)
+
+dt.model <- rpart(survived~., method="class", data=train_1, control = rpart.control(maxdepth=5, minsplit=15))
+
+dt.model
+
+prp(dt.model,type=4,extra = 2)
+
+pred<-predict(dt.model,test_1[,-2],type="prob")
+write.csv(pred,"decisionTree predict.csv")
+
+
+#모델링 (2) 랜덤 포레스트
+install.packages("randomForest")
+library(randomForest)
+
+rf.model<-randomForest(survived~., data=train_1)
+print(rf.model)
+
+pred<-predict(rf.model,test_1[,-2],type="prob")
+
+write.csv(pred,"randomForest predict.csv")
+
+
+#모델링 (3) 로지스틱 회귀분석
+
+lg.model<-step(glm(survived~1, data=train_1, family="binomial"),direction="both",
+               scope=list(lower=~1, upper=~pclass+sex+sibsp+parch+fare+embarked))
+
+summary(lg.model)
+
+pred<-predict(lg.model,test_1[,-2],type="response")
+pred1<-as.data.frame(pred)
+
+pred1$survived<-ifelse(pred1$pred<=0.5,pred1$survived<-"dead",pred1$survived<-"survived")
+
+write.csv(pred1,"logistic regression predict.csv")
+
+
+#---------------------------------------------------------------------------------------
+# Q3) 생성된 3개의 분류모델에 대해 성과분석을 실시하여 정확도를 비교하여 설명하시오. 
+#     또, ROC curve를 그리고 AUC값을 산출하시오.
+#---------------------------------------------------------------------------------------
+
+
+## < Solution >
+
+#성과분석 - (1) 의사결정나무
+#prediction 함수를 실행했을 때, 오류가 발생한다면 기존에 활성화된패키지 충돌입니다.(ROCR과 neuralnet)
+#해당 오류를 해결하기 위해서는 아래와 같이 코드를 실행하시면 됩니다.
+#pred.dt.roc<-ROCR::prediction(as.numeric(pred.dt),as.numeric(test_1[,2]))
+
+
+install.packages(c("caret","ROCR"))
+library(caret)
+library(ROCR)
+
+pred.dt<-predict(dt.model,test_1[,-2],type="class")
+
+confusionMatrix(data=pred.dt, reference=test_1[,2],positive="survived")
+
+pred.dt.roc<-prediction(as.numeric(pred.dt),as.numeric(test_1[,2]))
+plot(performance(pred.dt.roc,"tpr","fpr"))
+abline(a=0,b=1,lty=2,col="black")
+performance(pred.dt.roc,"auc")@y.values
+
+#성과분석 - (2) 랜덤 포레스트
+
+pred.rf<-predict(rf.model,test_1[,-2],type="class")
+
+confusionMatrix(data=pred.rf, reference=test_1[,2],positive="survived")
+
+pred.rf.roc<-prediction(as.numeric(pred.rf),as.numeric(test_1[,2]))
+plot(performance(pred.rf.roc,"tpr","fpr"))
+abline(a=0,b=1,lty=2,col="black")
+performance(pred.rf.roc,"auc")@y.values
+
+#성과분석 - (3) 로지스틱 회귀분석
+
+pred.lg<-predict(lg.model,test_1[,-2],type="response")
+pred.lg<-as.data.frame(pred.lg)
+
+pred.lg$survived<-ifelse(pred.lg$pred<=0.5,pred.lg$survived<-"dead",pred.lg$survived<-"survived")
+
+confusionMatrix(data=as.factor(pred.lg$survived), reference=test_1[,2], positive="survived")
+
+pred.lg$survived<-as.factor(pred.lg$survived)
+
+pred.lg.roc<-prediction(as.numeric(pred.lg[,2]),as.numeric(test_1[,2]))
+plot(performance(pred.lg.roc,"tpr","fpr"))
+abline(a=0,b=1,lty=2,col="black")
+performance(pred.lg.roc,"auc")@y.values
+
+
+
+
+###################################################################################
+#                      3. 비정형 데이터마이닝 (사용 데이터 : 문재인대통령 취임사)
+###################################################################################
+
+# 1) ‘연설문.txt’ 데이터를 읽어온 뒤 숫자, 특수 문자 등을 제거하는 전처리 작업을 시행하시오.
+
+install.packages(c("KoNLP","wordcloud","plyr", "rJava", "tm", "dplyr"))
+install.packages()
+install.packages()
+library(tm)
+library(rJava)
+library(KoNLP)
+library(wordcloud)
+library(plyr)
+library(dplyr)
+
+useSejongDic()
+
+moon<-readLines("연설문.txt")
+moon
+
+#데이터 전처리
+clean_txt<-function(txt){
+  txt<-tolower(txt)             # 대, 소문자 변환
+  txt<-removePunctuation(txt)   # 구두점 제거
+  txt<-removeNumbers(txt)       # 숫자 제거
+  txt<-stripWhitespace(txt)     # 공백제거
+  
+  return(txt)
+}
+moon_1<-clean_txt(moon)
+
+moon_1
+
+# 2) 전처리된 데이터에서 명사를 추출하고 명사의 출현빈도를 10위까지 추출하여 막대그래프로 시각화하시오.
+
+moon_1<-clean_txt(moon)
+
+noun<-extractNoun(moon_1)                   #명사 추출
+wordcount<-table(unlist(noun))              
+cnoun<-as.data.frame(wordcount, stringsAsFactors = F)
+
+table.cnoun<-cnoun[nchar(cnoun$Var1)>=2,]   #단어 길이가 2 이상만 추출
+
+top_10<-table.cnoun %>% arrange(-Freq) %>% head(10)
+
+barplot(top_10$Freq,names=top_10$Var1, main="문재인 대통령 취임사 빈출 명사", 
+        xlab="단어",
+        ylab="빈도")
+
+# 3) 전처리된 데이터를 이용해 워드클라우드를 작성하고 인사이트를 추출하시오.
+
+result<-table.cnoun %>% arrange(-Freq)
+
+t<-wordcloud(result$Var1,result$Freq,color=brewer.pal(6,"Dark2"),min.freq=2)
+

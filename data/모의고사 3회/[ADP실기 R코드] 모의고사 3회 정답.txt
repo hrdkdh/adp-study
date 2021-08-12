@@ -1,0 +1,348 @@
+# ADP실기 모의고사 3회 R코드
+
+
+###################################################################################
+#                      1. 통계분석 (사용 데이터 : Carseats)                  
+###################################################################################
+
+#------------------------------------------------------------------------------------------------
+# Q1) Urban변수에 따른 Sales의 차이가 있는지를 통계적으로 검증하기 위한 통계분석을 수행하고, 결과를 해석하시오. 
+#    (데이터는 정규성을 만족한다고 가정하고 유의수준 0.05 하에서 검정
+#------------------------------------------------------------------------------------------------
+
+## < Solution >
+
+##데이터 불러오기
+install.packages("ISLR")
+library(ISLR)
+
+data(Carseats)
+car<-Carseats
+str(car)
+head(car)
+
+sum(is.na(car))  #NA값이 존재하는지 확인
+
+# Urban변수에 따른 Sales의 차이를 통계적으로 검증하기 위한 독립표본 t-검정을 수행
+# 귀무가설 : 도시인지의 여부에 따른 판매량에는 차이가 없다. 
+# 대립가설 : 도시인지의 여부에 따른 판매량에는 차이가 없다.
+
+# 등분산 검정 수행
+# 귀무가설 : 두 집단의 분산이 동일하다.
+# 대립가설 : 두 집단의 분산이 동일하지 않다.
+var.test(Sales~Urban, data=car, alternative="two.sided") 
+
+# 두 모집단이 등분산성 가정을 만족한다는 가정하에서 독립표본 t-검정을 수행 
+t.test(Sales~Urban, data=car, alternative="two.sided", var.equal=TRUE)
+
+
+#------------------------------------------------------------------------------------------------
+# Q2)Sales변수와 CompPrice, Income, Advertising, Population, Price, Age, Education 변수들 간에 
+#    피어슨 상관계수를 이용한 상관관계 분석을 수행하고 이를 해석하시오.
+#------------------------------------------------------------------------------------------------
+
+## < Solution >
+
+attach(car)
+
+#1. Sales 와 CompPrice 간의 상관분석
+
+cor(Sales, CompPrice)         #피어슨 상관계수 산출
+cor.test(Sales, CompPrice)    #피어슨 상관계수 검정
+
+
+#2. Sales 와 Income 간의 상관분석
+
+cor(Sales, Income)         #피어슨 상관계수 산출
+cor.test(Sales, Income)    #피어슨 상관계수 검정
+
+
+#3. Sales 와 Advertising 간의 상관분석
+
+cor(Sales, Advertising)       #피어슨 상관계수 산출
+cor.test(Sales, Advertising)  #피어슨 상관계수 검정
+
+
+#4. Sales 와 Population 간의 상관분석
+
+cor(Sales, Population)         #피어슨 상관계수 산출
+cor.test(Sales, Population)    #피어슨 상관계수 검정
+
+
+#5. Sales 와 Price 간의 상관분석
+
+cor(Sales, Price)         #피어슨 상관계수 산출
+cor.test(Sales, Price)    #피어슨 상관계수 검정
+
+
+#6. Sales 와 Age 간의 상관분석
+
+cor(Sales, Age)         #피어슨 상관계수 산출
+cor.test(Sales, Age)    #피어슨 상관계수 검정
+
+
+#7. Sales 와 Education 간의 상관분석
+
+cor(Sales, Education)         #피어슨 상관계수 산출
+cor.test(Sales, Education)    #피어슨 상관계수 검정
+
+
+#8. 상관계수 행렬 생성 및 시각화
+str(car)
+cor(car[,-c(7,10,11)])
+plot(car[,-c(7,10,11)])
+
+
+
+#------------------------------------------------------------------------------------------------
+# Q3) 종속변수를 Sales, 독립변수를 CompPrice, Income, Advertising, Population, Price, 
+#     Age, Education으로 설정하고 후진제거법을 활용하여 회귀분석을 실시하고, 추정된 회귀식을 작성하시오. 
+#------------------------------------------------------------------------------------------------
+
+## < Solution >
+#후진제거법을 통한 변수선택 수행
+step(lm(Sales~CompPrice+Income+Advertising+Population+Price+ 
+          Age+Education, data=car), direction="backward")
+
+
+#------------------------------------------------------------------------------------------------
+# Q4)  앞서 생성한 회귀모델에 대해 해석하시오.
+#------------------------------------------------------------------------------------------------
+
+## < Solution >
+
+#변수선택을 통해 도출된 회귀모형
+car.lm <- lm(Sales ~ CompPrice + Income + Advertising + Price + Age, data = car)
+summary(car.lm)
+
+
+###################################################################################
+#                      2. 정형 데이터마이닝 (사용 데이터 : BlackFriday)                  
+###################################################################################
+
+#---------------------------------------------------------------------------------------
+# Q1) "BlackFriday"데이터에서 Product_Category_2, Product_Category_3의 NA 값에 0값으로 대체하고
+#     Product_categry_1, 2, 3 변수의 값을 다 더한 Product_all 변수를 생성하여 추가하라.
+#     그리고 User_ID를 character 변수로, Occupation, Marital_Status, Product_Category_1, 
+#     Product_Category_2, Product_Category_3 변수를 범주형 변수로 변환하시오. 
+#     마지막으로 범주형 변수인 Gender, Age, City_Category, Stay_In_Current_City_Years를 
+#     더미변수로 변환해서 BlackFriday 데이터에 추가하시오.
+#---------------------------------------------------------------------------------------
+
+BlackFriday<-read.csv("BlackFriday.csv")
+
+str(BlackFriday)
+
+##결측치 대체
+
+BlackFriday$Product_Category_2<-ifelse(is.na(BlackFriday$Product_Category_2)==TRUE,
+                                       0,
+                                       BlackFriday$Product_Category_2)
+
+BlackFriday$Product_Category_3<-ifelse(is.na(BlackFriday$Product_Category_3)==TRUE,
+                                       0,
+                                       BlackFriday$Product_Category_3)
+
+summary(BlackFriday)
+
+##변수 추가(Product_all)
+
+BlackFriday<-transform(BlackFriday, 
+                       Product_all=Product_Category_1 + Product_Category_2 + Product_Category_3)
+
+##데이터 형태 변환 
+
+BlackFriday$User_ID<-as.character(BlackFriday$User_ID)
+BlackFriday$Occupation<-as.factor(BlackFriday$Occupation)
+BlackFriday$Marital_Status<-as.factor(BlackFriday$Marital_Status)
+BlackFriday$Product_Category_1<-as.factor(BlackFriday$Product_Category_1)
+BlackFriday$Product_Category_2<-as.factor(BlackFriday$Product_Category_2)
+BlackFriday$Product_Category_3<-as.factor(BlackFriday$Product_Category_3)
+
+str(BlackFriday)
+
+## 더미 변수화(Gender, Age, City_Category, Stay_In_Current_City_Years)
+
+# 더미화를 위해 해당 변수 수치화
+install.packages("caret")
+library(caret)
+library(dplyr)
+
+BlackFriday_1 <- BlackFriday %>% mutate(Gender_binary = as.numeric(Gender), 
+                                        age_binary = as.numeric(Age),
+                                        City_Category_numeric = as.numeric(City_Category), 
+                                        Stay_In_Current_City_Years_numeric = as.numeric(Stay_In_Current_City_Years))
+
+dummy <- dummyVars("~ Gender + Age + City_Category + Stay_In_Current_City_Years", data = BlackFriday_1)
+
+new_df<-data.frame(predict(dummy,newdata=BlackFriday_1))
+
+BlackFriday_2<-cbind(BlackFriday, new_df)
+
+str(BlackFriday_2)
+
+
+#---------------------------------------------------------------------------------------
+# Q2) BlackFriday_1 데이터에서 User_ID, Product_ID, Gender, Age, City_Category, Stay_In_Current_City_Years, 
+#     Product_all  변수를 제외한 나머지 변수들을 활용하여 kmeans 군집분석을 수행하고 해석하시오.
+#     (범주형 변수는 수치형 변수로 변환하여 분석에 활용하시오.)
+#     그리고 최적의 군집 개수를 찾아서 만일 군집 개수가 이전 결과와 다르면 분석을 다시 수행하여 해석하시오.
+#---------------------------------------------------------------------------------------
+
+BlackFriday_cluster <- BlackFriday_2 %>% select(-User_ID, 
+                                                -Product_ID, 
+                                                -Gender, 
+                                                -Age, 
+                                                -City_Category, 
+                                                -Stay_In_Current_City_Years,
+                                                -Product_all)
+
+BlackFriday_cluster$Occupation<-as.numeric(BlackFriday_cluster$Occupation)
+BlackFriday_cluster$Marital_Status<-as.numeric(BlackFriday_cluster$Marital_Status)
+BlackFriday_cluster$Product_Category_1<-as.numeric(BlackFriday_cluster$Product_Category_1)
+BlackFriday_cluster$Product_Category_2<-as.numeric(BlackFriday_cluster$Product_Category_2)
+BlackFriday_cluster$Product_Category_3<-as.numeric(BlackFriday_cluster$Product_Category_3)
+
+str(BlackFriday_cluster)
+
+set.seed(1234)
+
+kmeans_BF<-kmeans(BlackFriday_cluster,3)
+
+kmeans_BF
+
+# Sum of square means그래프로 최적의 군집 찾기
+
+#최소 군집 2개, 최대 군집 20개
+wssplot <- function(data, nc = 15, seed = 1234) {
+  wss <- (nrow(data) - 1) * sum(apply(data, 2, var))
+  for (i in 2:nc) {
+    set.seed(seed)
+    wss[i] <- sum(kmeans(data, centers=i)$withinss)}
+  plot(1:nc, wss, type="b", xlab = "Number of Clusters",
+       ylab = "Within groups sum of squares")}
+
+wssplot(BlackFriday_cluster)     #최적의 군집이 4개로 나타남
+
+#군집의 개수를 4개로 하여 kmeans를 다시 실시
+kmeans_BF_4<-kmeans(BlackFriday_cluster,4)
+
+kmeans_BF_4
+
+
+#---------------------------------------------------------------------------------------
+# Q3) 최적의 군집 개수를 찾아 재수행한 군집분석의 결과로 분류된 군집번호를 원본 데이터인 BlackFriday데이터의 
+#     각 행에 맞게 labelling하여 clust라는 변수로 저장하고 csv 파일로 출력하시오.
+#     마지막으로 clust별 Gender, Age, Purchase으로 특성을 파악하시오.
+#---------------------------------------------------------------------------------------
+
+kmeans_clust <- kmeans_BF_4$cluster
+
+BlackFriday_full<-cbind(BlackFriday, clust=kmeans_clust)
+
+str(BlackFriday_full)
+
+write.csv(BlackFriday_full,"BlackFriday clust.csv")
+
+
+table(BlackFriday_full$clust)    # 군집내의 수는 2>3>1>4순으로 많음.
+
+#Clust별 Gender 요약
+xtabs(BlackFriday_full$clust ~ BlackFriday_full$Gender)
+
+xtabs(~BlackFriday_full$clust + BlackFriday_full$Gender)
+
+
+#Clust별 Age 요약
+xtabs(BlackFriday_full$clust ~ BlackFriday_full$Age)
+
+xtabs(~BlackFriday_full$clust + BlackFriday_full$Age)
+
+
+#Clust별 Purchase 요약
+aggregate(Purchase~clust, BlackFriday_full, mean) 
+
+aggregate(Purchase~Age, BlackFriday_full, mean) 
+
+aggregate(Purchase~Gender, BlackFriday_full, mean) 
+
+
+###################################################################################
+#                      3. 비정형 데이터마이닝 (사용 데이터 : "공구 블로그 댓글")
+###################################################################################
+
+#---------------------------------------------------------------------------
+# Q1) ‘공구 블로그 댓글.txt’ 파일을 읽어 들여 숫자, 특수 문자 등을 
+#     제거하는 전처리 작업을 시행하시오.
+#---------------------------------------------------------------------------
+
+install.packages(c("KoNLP","wordcloud"))
+install.packages("rJava")
+install.packages("tm")
+install.packages("plyr")
+library(tm)
+library(rJava)
+library(KoNLP)
+library(wordcloud)
+library(plyr)
+library(stringr)
+
+useSejongDic()
+
+blog<-read.csv("공구 블로그 댓글.txt",sep="\t")
+
+##데이터 전처리
+#"\t" 없애기
+
+blog$Date<-as.character(blog$Date)
+
+blog$Date<-substr(blog$Date,1,10)
+
+blog
+
+#데이터 전처리
+clean_txt<-function(txt){
+  txt<-tolower(txt)             # 대, 소문자 변환
+  txt<-removePunctuation(txt)   # 구두점 제거
+  txt<-removeNumbers(txt)       # 숫자 제거
+  txt<-stripWhitespace(txt)     # 공백제거
+  
+  return(txt)
+}
+blog$Content<-clean_txt(blog$Content)
+
+
+#---------------------------------------------------------------------------
+# Q2) ‘사전.txt’를 사전에 추가하고 문서에서 형용사를 추출하여라. 
+#---------------------------------------------------------------------------
+
+#사전 추가하기
+buildDictionary(ext_dic = "woorimalsam", user_dic=data.frame(readLines("사전.txt"),"ncn"),replace_usr_dic = T)
+
+#형용사 추출하기
+doc<-as.character(blog$Content)
+pos<-paste(SimplePos09(doc))
+extracted<-str_match(pos,'([가-힣]+)/[P]')
+keyword<-extracted[,2]
+keyword[!is.na(keyword)]
+
+#---------------------------------------------------------------------------
+# Q3) 2월에 게시된 댓글의 명사를 추출하고 빈도수를 시각화하시오.
+#---------------------------------------------------------------------------
+
+#2월 추출하기
+blog$Date<-as.Date(blog$Date, format="%Y.%m.%d")
+blog$month<-as.numeric(format(blog$Date, "%m"))
+blog$month
+blog_2<-subset(blog,blog$month==2)
+
+#2월 댓글의 명사추출
+blog2_exN<-sapply(blog_2$Content,extractNoun)
+Noun<-as.vector(unlist(blog2_exN))
+Noun_2<-Noun[nchar(Noun)>=2]
+table.cnoun<-head(sort(table(Noun_2),decreasing=T),5)
+
+#시각화
+colors<-rainbow(5)
+pie(table.cnoun, main="2월 댓글 빈출 명사",col=colors)
+legend("right",names(table.cnoun),fill=colors)
